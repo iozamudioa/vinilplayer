@@ -21,8 +21,8 @@ class SettingsStore {
   Future<AppSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
     final baseUrl =
-        prefs.getString(_baseUrlKey) ?? 'http://192.168.1.100:8750/api/v1';
-    final apiToken = prefs.getString(_apiTokenKey) ?? '';
+      prefs.getString(_baseUrlKey) ?? 'http://192.168.100.27:8750/api/v1';
+    final apiToken = prefs.getString(_apiTokenKey) ?? 'token-prueba';
     return AppSettings(baseUrl: baseUrl, apiToken: apiToken);
   }
 

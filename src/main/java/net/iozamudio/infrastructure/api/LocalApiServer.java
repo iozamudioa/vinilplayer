@@ -16,7 +16,6 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
@@ -36,9 +35,9 @@ public class LocalApiServer {
         this.mediaControl = mediaControl;
         this.startedAtMs = System.currentTimeMillis();
 
-        String configuredToken = System.getProperty("vinil.api.token", "").trim();
+        String configuredToken = System.getProperty("vinil.api.token", "token-prueba").trim();
         this.apiToken = configuredToken.isEmpty()
-                ? UUID.randomUUID().toString().replace("-", "")
+            ? "token-prueba"
                 : configuredToken;
 
         String host = resolveHost();
@@ -244,7 +243,7 @@ public class LocalApiServer {
     }
 
     private String resolveHost() {
-        String host = System.getProperty("vinil.api.host", "127.0.0.1").trim();
+        String host = System.getProperty("vinil.api.host", "0.0.0.0").trim();
         return host.isEmpty() ? "127.0.0.1" : host;
     }
 

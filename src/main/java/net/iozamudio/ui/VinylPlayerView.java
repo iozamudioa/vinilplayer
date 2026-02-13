@@ -54,7 +54,9 @@ import net.iozamudio.util.WindowsTaskbarUtils;
 
 import java.awt.Desktop;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.net.URI;
+import java.net.URL;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
@@ -140,7 +142,10 @@ public class VinylPlayerView {
         StackPane root = createMainPanel(stage);
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
-        scene.getStylesheets().add(getClass().getResource("/vinyl.css").toExternalForm());
+        String stylesheet = resolveStylesheet();
+        if (stylesheet != null) {
+            scene.getStylesheets().add(stylesheet);
+        }
 
         stage.setScene(scene);
         stage.show();
@@ -156,6 +161,26 @@ public class VinylPlayerView {
 
         setupLyricsWidget();
         ensureProgressAnimationRunning();
+    }
+
+    private String resolveStylesheet() {
+        URL resource = getClass().getResource("/vinyl.css");
+        if (resource != null) {
+            return resource.toExternalForm();
+        }
+
+        File targetClassesCss = new File("target/classes/vinyl.css");
+        if (targetClassesCss.exists()) {
+            return targetClassesCss.toURI().toString();
+        }
+
+        File sourceCss = new File("src/main/resources/vinyl.css");
+        if (sourceCss.exists()) {
+            return sourceCss.toURI().toString();
+        }
+
+        System.err.println("WARN: Stylesheet vinyl.css not found; continuing without CSS");
+        return null;
     }
 
     private Image createVinylAppIcon() {
