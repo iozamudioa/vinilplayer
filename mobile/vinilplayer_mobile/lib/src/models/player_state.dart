@@ -8,7 +8,11 @@ class PlayerState {
     required this.progress,
     required this.artist,
     required this.title,
+    required this.source,
     required this.thumbnailBase64,
+    required this.thumbnailHdBase64,
+    required this.syncedLyrics,
+    required this.serverActiveLyricsIndex,
     required this.canPlayPause,
     required this.canSeek,
     required this.canNext,
@@ -22,7 +26,11 @@ class PlayerState {
   final double progress;
   final String artist;
   final String title;
+  final String source;
   final String thumbnailBase64;
+  final String thumbnailHdBase64;
+  final List<LyricsLine> syncedLyrics;
+  final int serverActiveLyricsIndex;
   final bool canPlayPause;
   final bool canSeek;
   final bool canNext;
@@ -40,6 +48,14 @@ class PlayerState {
     return '$title — $artist';
   }
 
+  String get preferredThumbnailBase64 {
+    final hd = thumbnailHdBase64.trim();
+    if (hd.isNotEmpty) {
+      return hd;
+    }
+    return thumbnailBase64;
+  }
+
   static PlayerState empty() {
     return PlayerState(
       status: 'STOPPED',
@@ -48,7 +64,11 @@ class PlayerState {
       progress: 0,
       artist: '',
       title: '',
+      source: 'default',
       thumbnailBase64: '',
+      thumbnailHdBase64: '',
+      syncedLyrics: const [],
+      serverActiveLyricsIndex: -1,
       canPlayPause: true,
       canSeek: true,
       canNext: true,
@@ -60,6 +80,7 @@ class PlayerState {
   factory PlayerState.fromJson(Map<String, dynamic> json) {
     final playback = (json['playback'] as Map<String, dynamic>?) ?? const {};
     final track = (json['track'] as Map<String, dynamic>?) ?? const {};
+    final lyrics = (json['lyrics'] as Map<String, dynamic>?) ?? const {};
     final capabilities =
         (json['capabilities'] as Map<String, dynamic>?) ?? const {};
 
@@ -70,7 +91,11 @@ class PlayerState {
       progress: _toDouble(playback['progress']),
       artist: (track['artist'] ?? '').toString(),
       title: (track['title'] ?? '').toString(),
+      source: (track['source'] ?? 'default').toString(),
       thumbnailBase64: (track['thumbnailBase64'] ?? '').toString(),
+      thumbnailHdBase64: (track['thumbnailHdBase64'] ?? '').toString(),
+      syncedLyrics: _parseLyricsLines(lyrics['lines']),
+      serverActiveLyricsIndex: _toInt(lyrics['activeIndex'], fallback: -1),
       canPlayPause: _toBool(capabilities['canPlayPause'], fallback: true),
       canSeek: _toBool(capabilities['canSeek'], fallback: true),
       canNext: _toBool(capabilities['canNext'], fallback: true),
@@ -99,6 +124,40 @@ class PlayerState {
       }
     }
     return fallback;
+  }
+
+  static int _toInt(dynamic value, {required int fallback}) {
+    if (value is num) {
+      return value.toInt();
+    }
+
+    final parsed = int.tryParse(value?.toString() ?? '');
+    return parsed ?? fallback;
+  }
+
+  static List<LyricsLine> _parseLyricsLines(dynamic value) {
+    if (value is! List) {
+      return const [];
+    }
+
+    final lines = <LyricsLine>[];
+    for (final entry in value) {
+      if (entry is! Map) {
+        continue;
+      }
+
+      final map = Map<String, dynamic>.from(entry);
+
+      final time = _toDouble(map['timeSeconds']);
+      final text = (map['text'] ?? '').toString().trim();
+      if (text.isEmpty) {
+        continue;
+      }
+
+      lines.add(LyricsLine(timeSeconds: time, text: text));
+    }
+
+    return lines;
   }
 }
 

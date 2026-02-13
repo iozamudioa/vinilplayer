@@ -49,6 +49,7 @@ import net.iozamudio.application.port.in.LyricsUseCase;
 import net.iozamudio.application.port.in.MediaControlUseCase;
 import net.iozamudio.model.LyricsLine;
 import net.iozamudio.model.MediaInfo;
+import net.iozamudio.util.ActiveMusicSource;
 import net.iozamudio.util.WindowsTaskbarMediaButtons;
 import net.iozamudio.util.WindowsTaskbarUtils;
 
@@ -607,18 +608,22 @@ public class VinylPlayerView {
         Button amazonMusic = createServiceIconButton("a", "Reproducir en Amazon Music", AMAZON_MUSIC_ACCENT_COLOR);
 
         ytMusic.setOnAction(e -> openMusicService(
+            ActiveMusicSource.YOUTUBE_MUSIC,
             YOUTUBE_ACCENT_COLOR,
                 new String[] {"youtubemusic://"},
                 "https://music.youtube.com"));
         spotify.setOnAction(e -> openMusicService(
+            ActiveMusicSource.SPOTIFY,
             SPOTIFY_ACCENT_COLOR,
                 new String[] {"spotify:"},
                 "https://open.spotify.com"));
         appleMusic.setOnAction(e -> openMusicService(
+            ActiveMusicSource.APPLE_MUSIC,
             APPLE_MUSIC_ACCENT_COLOR,
                 new String[] {"applemusic://", "music://"},
                 "https://music.apple.com"));
         amazonMusic.setOnAction(e -> openMusicService(
+            ActiveMusicSource.AMAZON_MUSIC,
             AMAZON_MUSIC_ACCENT_COLOR,
                 new String[] {"amazonmusic://"},
                 "https://music.amazon.com"));
@@ -658,7 +663,8 @@ public class VinylPlayerView {
         serviceButtonsBox.setManaged(noPlayback);
     }
 
-    private void openMusicService(Color accentColor, String[] appUris, String webUrl) {
+    private void openMusicService(String sourceKey, Color accentColor, String[] appUris, String webUrl) {
+        ActiveMusicSource.set(sourceKey);
         applyAccentColor(accentColor);
 
         for (String appUri : appUris) {

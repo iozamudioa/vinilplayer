@@ -1,14 +1,46 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
+import 'package:audio_service/audio_service.dart';
+import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import 'src/services/mobile_media_session_handler.dart';
 import 'src/ui/home_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const VinilPlayerMobileApp());
+  await _ensureNotificationPermission();
+
+  final mediaSessionHandler = await AudioService.init(
+    builder: () => MobileMediaSessionHandler(),
+    config: AudioServiceConfig(
+      androidNotificationChannelId: 'net.iozamudio.vinilplayer_mobile.playback',
+      androidNotificationChannelName: 'VinilPlayer Playback',
+      androidNotificationOngoing: true,
+      androidStopForegroundOnPause: false,
+    ),
+  );
+
+  runApp(VinilPlayerMobileApp(mediaSessionHandler: mediaSessionHandler));
+}
+
+Future<void> _ensureNotificationPermission() async {
+  if (!Platform.isAndroid) {
+    return;
+  }
+
+  final status = await Permission.notification.status;
+  if (status.isGranted) {
+    return;
+  }
+
+  await Permission.notification.request();
 }
 
 class VinilPlayerMobileApp extends StatelessWidget {
-  const VinilPlayerMobileApp({super.key});
+  const VinilPlayerMobileApp({super.key, required this.mediaSessionHandler});
+
+  final AudioHandler mediaSessionHandler;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +57,7 @@ class VinilPlayerMobileApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFF0B0E14),
       ),
-      home: const HomeScreen(),
+      home: HomeScreen(mediaSessionHandler: mediaSessionHandler),
     );
   }
 }

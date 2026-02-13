@@ -69,7 +69,8 @@ public class Main extends Application {
 
         localApiServer = new LocalApiServer(
             pollingService::getLatestInfo,
-            mediaControlUseCase);
+            mediaControlUseCase,
+            lyricsUseCase);
         localApiServer.start();
 
         this.view = new VinylPlayerView(mediaControlUseCase, lyricsUseCase, this::shutdownPolling);

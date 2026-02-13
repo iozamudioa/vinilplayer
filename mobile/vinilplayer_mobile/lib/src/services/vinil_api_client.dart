@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/player_state.dart';
 
@@ -9,12 +10,11 @@ class VinilApiClient {
       : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
+  WebSocketChannel? _stateChannel;
 
-  Future<PlayerState> fetchState(String baseUrl) async {
+  Future<PlayerState> fetchState(String baseUrl, {Duration timeout = const Duration(seconds: 4)}) async {
     final uri = Uri.parse('${_normalizeBaseUrl(baseUrl)}/state');
-    final response = await _httpClient.get(uri).timeout(
-      const Duration(seconds: 4),
-    );
+    final response = await _httpClient.get(uri).timeout(timeout);
 
     if (response.statusCode != 200) {
       throw ApiException('No se pudo obtener estado (${response.statusCode})');
@@ -59,6 +59,31 @@ class VinilApiClient {
     }
   }
 
+  Stream<PlayerState> connectStateStream({
+    required String baseUrl,
+    required String apiToken,
+  }) {
+    disconnectStateStream();
+
+    final uri = _buildWsUri(baseUrl, apiToken);
+    final channel = WebSocketChannel.connect(uri);
+    _stateChannel = channel;
+
+    return channel.stream.map((dynamic raw) {
+      final decoded = jsonDecode(raw.toString()) as Map<String, dynamic>;
+      final payload = decoded['state'];
+      if (payload is! Map<String, dynamic>) {
+        throw ApiException('Payload WS inválido');
+      }
+      return PlayerState.fromJson(payload);
+    });
+  }
+
+  void disconnectStateStream() {
+    _stateChannel?.sink.close();
+    _stateChannel = null;
+  }
+
   String _normalizeBaseUrl(String baseUrl) {
     final trimmed = baseUrl.trim();
     if (trimmed.endsWith('/')) {
@@ -67,7 +92,30 @@ class VinilApiClient {
     return trimmed;
   }
 
+  Uri _buildWsUri(String baseUrl, String apiToken) {
+    final normalized = _normalizeBaseUrl(baseUrl);
+    final httpUri = Uri.parse(normalized);
+
+    final wsScheme = httpUri.scheme == 'https' ? 'wss' : 'ws';
+    final wsPort = (httpUri.hasPort ? httpUri.port : 80) + 1;
+    final path = '${httpUri.path}/ws'.replaceAll('//', '/');
+
+    final query = <String, String>{};
+    if (apiToken.trim().isNotEmpty) {
+      query['token'] = apiToken.trim();
+    }
+
+    return Uri(
+      scheme: wsScheme,
+      host: httpUri.host,
+      port: wsPort,
+      path: path,
+      queryParameters: query.isEmpty ? null : query,
+    );
+  }
+
   void dispose() {
+    disconnectStateStream();
     _httpClient.close();
   }
 }
