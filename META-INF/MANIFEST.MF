@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Created-By: Maven JAR Plugin 3.3.0
+Build-Jdk-Spec: 25
+Class-Path: lib/javafx-controls-21.0.2.jar lib/javafx-controls-21.0.2-wi
+ n.jar lib/javafx-graphics-21.0.2.jar lib/javafx-graphics-21.0.2-win.jar
+  lib/javafx-base-21.0.2.jar lib/javafx-base-21.0.2-win.jar lib/gson-2.1
+ 0.1.jar lib/jna-platform-5.13.0.jar lib/jna-5.13.0.jar
+Main-Class: net.iozamudio.Main
+
