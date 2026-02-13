@@ -109,6 +109,10 @@ public class MediaPollingService extends Thread implements MediaPollingUseCase, 
         onMediaUpdate.accept(info);
     }
 
+    public MediaInfo getLatestInfo() {
+        return latestInfo;
+    }
+
     public void attemptAutoPlayIfStopped(int retries, long waitBetweenAttemptsMs) {
         Thread autoPlayThread = new Thread(() -> {
             for (int i = 0; i < retries && running; i++) {

@@ -15,6 +15,7 @@ import net.iozamudio.infrastructure.media.DemoMediaInfoProviderAdapter;
 import net.iozamudio.infrastructure.media.ScriptMediaInfoProviderAdapter;
 import net.iozamudio.infrastructure.media.WindowsMediaControlAdapter;
 import net.iozamudio.infrastructure.lyrics.LrcLibLyricsProviderAdapter;
+import net.iozamudio.infrastructure.api.LocalApiServer;
 import net.iozamudio.ui.VinylPlayerView;
 import net.iozamudio.util.SingleInstanceManager;
 import net.iozamudio.util.SystemTrayManager;
@@ -32,6 +33,7 @@ public class Main extends Application {
     private MediaPollingService pollingService;
     private VinylPlayerView view;
     private SystemTrayManager trayManager;
+    private LocalApiServer localApiServer;
     private Stage primaryStage;
     private boolean demoMode = false;
     private int fadeInDurationMs = 5000;
@@ -64,6 +66,12 @@ public class Main extends Application {
         this.pollingUseCase = pollingService;
 
         MediaControlUseCase mediaControlUseCase = pollingService;
+
+        localApiServer = new LocalApiServer(
+            pollingService::getLatestInfo,
+            mediaControlUseCase);
+        localApiServer.start();
+
         this.view = new VinylPlayerView(mediaControlUseCase, lyricsUseCase, this::shutdownPolling);
         view.show(stage);
 
@@ -100,6 +108,10 @@ public class Main extends Application {
         }
         if (trayManager != null) {
             trayManager.remove();
+        }
+        if (localApiServer != null) {
+            localApiServer.stop();
+            localApiServer = null;
         }
         shutdownPolling();
     }
